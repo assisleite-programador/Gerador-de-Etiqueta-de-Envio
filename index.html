@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Etiqueta de Envio — Padrão Correios</title>
+    <title>Gerador de Etiqueta de Envio — Padrão Correios | Ateliê Arleany Mascarenhas</title>
     <!-- Tailwind CSS para layout responsivo e limpo da aplicação -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Fonte Inter para UI e fonte limpa/técnica para o documento -->
@@ -32,7 +32,7 @@
             color: #0F172A;
         }
 
-        /* Estilo fiel à folha/etiqueta branca no padrão mostrado na imagem */
+        /* Estilo fiel à folha/etiqueta branca no padrão Correios */
         .label-sheet {
             width: 100%;
             max-width: 620px;
@@ -217,7 +217,8 @@
             .check-box,
             .cep-digit-box,
             .form-line,
-            .corner-mark {
+            .corner-mark,
+            .atelier-brand-badge {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
@@ -235,10 +236,10 @@
                 </div>
                 <div>
                     <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                        Gerador de Etiqueta de Envio
+                        Ateliê Arleany Mascarenhas — Gerador de Etiqueta de Envio
                     </h1>
                     <p class="text-xs text-slate-500">
-                        Preenchimento em tempo real • Padrão Correios • <span class="font-medium text-slate-700">Ateliê Arleany Mascarenhas</span>
+                        Preenchimento em tempo real • Padrão Correios com Destinatário e Remetente
                     </p>
                 </div>
             </div>
@@ -274,12 +275,12 @@
             <!-- ============================================================= -->
             <aside class="no-print lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 sm:p-5 space-y-5">
 
-                <!-- 0. Identificação da Marca / Ateliê -->
+                <!-- 0. Identidade do Ateliê -->
                 <div class="bg-amber-50/70 rounded-xl p-3.5 border border-amber-200/80 space-y-2.5">
                     <div class="flex items-center justify-between gap-2">
                         <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-800">
                             <i data-lucide="sparkles" class="w-4 h-4 text-amber-600"></i>
-                            <span>Marca do Ateliê</span>
+                            <span>Identidade do Ateliê</span>
                         </div>
 
                         <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer select-none">
@@ -290,13 +291,13 @@
                                 onchange="syncLabel()"
                                 class="w-4 h-4 rounded accent-slate-900 cursor-pointer"
                             >
-                            <span>Exibir na etiqueta</span>
+                            <span>Exibir marca do ateliê na etiqueta</span>
                         </label>
                     </div>
 
                     <div>
                         <label for="input-marca-atelie" class="block text-[11px] font-semibold text-slate-600 mb-1">
-                            Nome do Ateliê / Marca
+                            Nome / Marca do Ateliê
                         </label>
                         <input
                             id="input-marca-atelie"
@@ -604,7 +605,7 @@
             </aside>
 
             <!-- ============================================================= -->
-            <!-- VISUALIZAÇÃO DA ETIQUETA EM TEMPO REAL (MODELO DA IMAGEM)      -->
+            <!-- VISUALIZAÇÃO DA ETIQUETA EM TEMPO REAL (MODELO CORREIOS)      -->
             <!-- ============================================================= -->
             <section class="lg:col-span-7 flex flex-col items-center">
                 <div class="no-print w-full max-w-[620px] flex items-center justify-between text-xs text-slate-500 mb-2.5 px-1">
@@ -658,7 +659,7 @@
                         <div class="p-2 flex flex-wrap sm:flex-nowrap items-end justify-between gap-3">
                             <div class="flex items-center gap-4 shrink-0">
                                 <div class="inline-flex items-center gap-1.5">
-                                    <span id="box-vizinho-nao" class="check-box"></span>
+                                    <span id="box-vizinho-nao" class="check-box">X</span>
                                     <span class="text-[10.5px] font-bold text-black">NÃO (no)</span>
                                 </div>
 
@@ -724,8 +725,115 @@
                         </div>
 
                         <!-- Nome do Remetente -->
-<!-- ... existing ... -->
-        // Atualiza a identificação da marca do ateliê e sincroniza com o remetente se vazio
+                        <div id="out-rem-nome" class="form-line">Ateliê Arleany Mascarenhas</div>
+
+                        <!-- Endereço do Remetente -->
+                        <div>
+                            <span class="field-label-small">ENDEREÇO (Address)</span>
+                            <div id="out-rem-endereco" class="form-line"></div>
+                        </div>
+
+                        <!-- Cidade / UF // Telefone do Remetente -->
+                        <div class="grid grid-cols-1 sm:grid-cols-12 items-end gap-1">
+                            <div class="sm:col-span-7">
+                                <span class="field-label-small">CIDADE (City) / UF (State)</span>
+                                <div id="out-rem-cidade-uf" class="form-line"></div>
+                            </div>
+
+                            <div class="hidden sm:flex sm:col-span-1 items-center justify-center pb-0.5">
+                                <span class="slash-divider">//</span>
+                            </div>
+
+                            <div class="sm:col-span-4">
+                                <span class="field-label-small">TELEFONE (Phone Number)</span>
+                                <div id="out-rem-telefone" class="form-line"></div>
+                            </div>
+                        </div>
+
+                        <!-- CEP (Postal Code) do Remetente em caixinhas 5 + 3 -->
+                        <div class="pt-0.5">
+                            <span class="field-label-small">CEP (Postal Code)</span>
+                            <div id="out-rem-cep-boxes" class="flex items-center flex-wrap gap-1 mt-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- JAVASCRIPT DA APLICAÇÃO (CORRETAMENTE FECHADO ANTES DO </body>)       -->
+    <!-- ===================================================================== -->
+    <script>
+        // Inicializa os ícones Lucide com tratamento seguro
+        function initIcons() {
+            try {
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
+            } catch (err) {
+                // Ignora caso offline
+            }
+        }
+
+        // Máscara para Data de entrega (DD/MM/AAAA)
+        function formatDateInput(input) {
+            let digits = (input.value || '').replace(/\D/g, '').slice(0, 8);
+            if (digits.length > 4) {
+                input.value = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+            } else if (digits.length > 2) {
+                input.value = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+            } else {
+                input.value = digits;
+            }
+        }
+
+        // Máscara para Telefone ((00) 00000-0000 ou (00) 0000-0000)
+        function formatPhoneInput(input) {
+            let digits = (input.value || '').replace(/\D/g, '').slice(0, 11);
+            if (digits.length > 10) {
+                input.value = `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+            } else if (digits.length > 6) {
+                input.value = `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+            } else if (digits.length > 2) {
+                input.value = `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+            } else if (digits.length > 0) {
+                input.value = `(${digits}`;
+            } else {
+                input.value = '';
+            }
+        }
+
+        // Máscara para CEP (00000-000)
+        function formatCepInput(input) {
+            let digits = (input.value || '').replace(/\D/g, '').slice(0, 8);
+            if (digits.length > 5) {
+                input.value = `${digits.slice(0, 5)}-${digits.slice(5)}`;
+            } else {
+                input.value = digits;
+            }
+        }
+
+        // Renderiza as 8 caixinhas de CEP separadas em 5 + 3 dígitos
+        function renderCepBoxes(containerId, cepValue) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const digits = (cepValue || '').replace(/\D/g, '').slice(0, 8);
+            let html = '';
+
+            for (let i = 0; i < 8; i++) {
+                if (i === 5) {
+                    html += '<span class="cep-gap"></span>';
+                }
+                const char = digits[i] ? digits[i] : '';
+                html += `<span class="cep-digit-box">${char}</span>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Sincroniza o nome da marca do ateliê com o remetente se não houver edição manual
         function syncMarcaAtelie() {
             const marcaInput = document.getElementById('input-marca-atelie');
             const remNomeInput = document.getElementById('input-rem-nome');
