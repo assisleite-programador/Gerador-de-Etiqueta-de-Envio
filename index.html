@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Etiqueta de Envio — Padrão Correios</title>
+    <!-- Tailwind CSS para layout responsivo e limpo da aplicação -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonte Inter para UI e fonte limpa/técnica para o documento -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Fundo neutro da bancada na tela */
+        body {
+            background-color: #F1F5F9;
+            color: #0F172A;
+        }
+
+        /* Estilo fiel à folha/etiqueta branca no padrão mostrado na imagem */
+        .label-sheet {
+            width: 100%;
+            max-width: 620px;
+            background-color: #FFFFFF;
+            color: #000000;
+            padding: 26px 28px;
+            box-sizing: border-box;
+            box-shadow: 0 12px 30px -8px rgba(15, 23, 42, 0.14), 0 0 0 1px rgba(15, 23, 42, 0.08);
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.25;
+        }
+
+        /* Área superior reservada com cantoneiras em L */
+        .correios-box {
+            position: relative;
+            min-height: 168px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 18px 24px;
+            margin-bottom: 14px;
+        }
+
+        .corner-mark {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-color: #111111;
+            border-style: solid;
+            border-width: 0;
+        }
+        .corner-tl { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; }
+        .corner-tr { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; }
+        .corner-bl { bottom: 0; left: 0; border-bottom-width: 2px; border-left-width: 2px; }
+        .corner-br { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; }
+
+        /* Linhas de preenchimento tipo formulário oficial */
+        .form-line {
+            border-bottom: 1.5px solid #111111;
+            min-height: 21px;
+            display: flex;
+            align-items: flex-end;
+            padding: 0 4px 2px 4px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #000000;
+            word-break: break-word;
+        }
+
+        .field-label-small {
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: #111111;
+            margin-bottom: 1px;
+            display: block;
+        }
+
+        /* Faixa preta de cabeçalho de seção */
+        .section-banner {
+            background-color: #000000;
+            color: #FFFFFF;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            padding: 3px 8px;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+
+        .section-banner-full {
+            background-color: #000000;
+            color: #FFFFFF;
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            padding: 4px 8px;
+            display: block;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        /* Caixinha quadrada de marcação (checkbox visual) */
+        .check-box {
+            width: 20px;
+            height: 20px;
+            border: 1.5px solid #111111;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 800;
+            line-height: 1;
+            background: #FFFFFF;
+            color: #000000;
+            flex-shrink: 0;
+        }
+
+        /* Caixinhas individuais para CEP 5 + 3 dígitos */
+        .cep-digit-box {
+            width: 22px;
+            height: 24px;
+            border: 1.5px solid #111111;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #000000;
+            background: #FFFFFF;
+            line-height: 1;
+        }
+
+        .cep-gap {
+            width: 10px;
+            display: inline-block;
+        }
+
+        /* Separador diagonal duplo Cidade/UF // Telefone */
+        .slash-divider {
+            font-weight: 700;
+            font-size: 16px;
+            line-height: 1;
+            color: #111111;
+            padding: 0 6px;
+            user-select: none;
+        }
+
+        /* Regras específicas para impressão limpa em PDF ou papel */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+
+            body {
+                background-color: #FFFFFF !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .print-container {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .label-sheet {
+                max-width: 100% !important;
+                width: 100% !important;
+                box-shadow: none !important;
+                padding: 6px 10px !important;
+                border: none !important;
+            }
+
+            .section-banner,
+            .section-banner-full,
+            .check-box,
+            .cep-digit-box,
+            .form-line,
+            .corner-mark {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen antialiased">
+
+    <!-- Barra Superior da Aplicação (Oculta na impressão) -->
+    <header class="no-print bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shadow-sm">
+                    <i data-lucide="package-check" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+                        Gerador de Etiqueta de Envio
+                    </h1>
+                    <p class="text-xs text-slate-500">
+                        Preenchimento em tempo real • Padrão Correios com Destinatário e Remetente
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+                <button
+                    type="button"
+                    onclick="clearAllFields()"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition cursor-pointer"
+                >
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <span>Limpar Campos</span>
+                </button>
+
+                <button
+                    type="button"
+                    onclick="printLabel()"
+                    class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold shadow-sm transition cursor-pointer"
+                >
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>Imprimir / Salvar PDF</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Área Principal: Formulário à Esquerda/Topo + Etiqueta ao Vivo à Direita/Baixo -->
+    <main class="print-container max-w-7xl mx-auto px-3 sm:px-6 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- ============================================================= -->
+            <!-- PAINEL DE PREENCHIMENTO (OCULTO NA IMPRESSÃO)                 -->
+            <!-- ============================================================= -->
+            <aside class="no-print lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 sm:p-5 space-y-5">
+
+                <!-- 1. Dados de Recebimento e Entrega -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100 pb-2">
+                        <i data-lucide="clipboard-check" class="w-4 h-4 text-amber-600"></i>
+                        <span>Recebimento e Vizinho</span>
+                    </div>
+
+                    <div>
+                        <label for="input-recebedor" class="block text-xs font-semibold text-slate-700 mb-1">
+                            Recebedor
+                        </label>
+                        <input
+                            id="input-recebedor"
+                            type="text"
+                            placeholder="Nome de quem recebe (opcional)"
+                            oninput="syncLabel()"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="input-documento" class="block text-xs font-semibold text-slate-700 mb-1">
+                                Documento
+                            </label>
+                            <input
+                                id="input-documento"
+                                type="text"
+                                placeholder="RG ou CPF"
+                                oninput="syncLabel()"
+                                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="input-data-entrega" class="block text-xs font-semibold text-slate-700 mb-1">
+                                Data de entrega
+                            </label>
+                            <input
+                                id="input-data-entrega"
+                                type="text"
+                                maxlength="10"
+                                placeholder="DD/MM/AAAA"
+                                oninput="formatDateInput(this); syncLabel();"
+                                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Autoriza entrega no vizinho -->
+                    <div class="bg-slate-50 rounded-xl p-3 border border-slate-200/70 space-y-2.5">
+                        <span class="block text-xs font-semibold text-slate-700">
+                            Autoriza a entrega no vizinho?
+                        </span>
+                        <div class="flex flex-wrap items-center gap-4">
+                            <label class="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-800 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="vizinho"
+                                    value="nao"
+                                    checked
+                                    onchange="syncLabel()"
+                                    class="w-4 h-4 accent-slate-900"
+                                >
+                                <span>NÃO (no)</span>
+                            </label>
+
+                            <label class="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-800 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="vizinho"
+                                    value="sim"
+                                    onchange="syncLabel()"
+                                    class="w-4 h-4 accent-slate-900"
+                                >
+                                <span>SIM (yes)</span>
+                            </label>
+                        </div>
+
+                        <div>
+                            <label for="input-vizinho-numero" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                Número / Casa do vizinho
+                            </label>
+                            <input
+                                id="input-vizinho-numero"
+                                type="text"
+                                placeholder="Ex.: Casa 12 / Apto 204"
+                                oninput="syncLabel()"
+                                class="w-full px-3 py-1.5 text-sm rounded-lg border border-slate-300 bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Destinatário (Addressee) -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <i data-lucide="map-pin" class="w-4 h-4 text-slate-800"></i>
+                            <span>Destinatário (Addressee)</span>
+                        </div>
+                        <span id="status-cep-dest" class="text-[11px] text-slate-400"></span>
+                    </div>
+
+                    <div>
+                        <label for="input-dest-nome" class="block text-xs font-semibold text-slate-700 mb-1">
+                            Nome do Destinatário
+                        </label>
+                        <input
+                            id="input-dest-nome"
+                            type="text"
+                            placeholder="Nome completo do destinatário"
+                            oninput="syncLabel()"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="input-dest-endereco" class="block text-xs font-semibold text-slate-700 mb-1">
+                            Endereço (Rua, Número, Bairro, Complemento)
+                        </label>
+                        <input
+                            id="input-dest-endereco"
+                            type="text"
+                            placeholder="Ex.: Rua das Flores, 120 - Centro"
+                            oninput="syncLabel()"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="input-dest-cidade-uf" class="block text-xs font-semibold text-slate-700 mb-1">
+                                Cidade / UF
+                            </label>
+                            <input
+                                id="input-dest-cidade-uf"
+                                type="text"
+                                placeholder="Ex.: Mossoró / RN"
+                                oninput="syncLabel()"
+                                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="input-dest-telefone" class="block text-xs font-semibold text-slate-700 mb-1">
+                                Telefone
+                            </label>
+                            <input
+                                id="input-dest-telefone"
+                                type="text"
+                                maxlength="16"
+                                placeholder="(00) 90000-0000"
+                                oninput="formatPhoneInput(this); syncLabel();"
+                                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                            >
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="input-dest-cep" class="block text-xs font-semibold text-slate-700 mb-1">
+                            CEP (Busca automática opcional)
+                        </label>
+                        <div class="flex gap-2">
+                            <input
+                                id="input-dest-cep"
+                                type="text"
+                                maxlength="9"
+                                placeholder="00000-000"
+                                oninput="formatCepInput(this); syncLabel();"
+                                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                            >
+                            <button
+                                type="button"
+                                onclick="lookupCep('dest')"
+                                class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold whitespace-nowrap transition cursor-pointer"
+                            >
+                                Buscar CEP
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Remetente (Sender) -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                            <i data-lucide="send" class="w-4 h-4 text-slate-800"></i>
+                            <span>Remetente (Sender)</span>
+                        </div>
+                        <span id="status-cep-rem" class="text-[11px] text-slate-400"></span>
+                    </div>
+
+                    <div>
+                        <label for="input-rem-nome" class="block text-xs font-semibold text-slate-700 mb-1">
+                            Nome do Remetente
+                        </label>
+                        <input
+                            id="input-rem-nome"
+                            type="text"
+                            placeholder="Seu nome ou loja"
+                            oninput="syncLabel()"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="input-rem-endereco" class="block text-xs font-semibold text-slate-700 mb-1">
+                            Endereço do Remetente
+                        </label>
+                        <input
+                            id="input-rem-endereco"
+                            type="text"
+                            placeholder="Rua, número, bairro"
+                            oninput="syncLabel()"
+                            class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="input-rem-cidade-uf" class="block text-xs font-semibold text-slate-700 mb-1">
+                                Cidade / UF
+                            </label>
+                            <input
+                                id="input-rem-cidade-uf"
+                                type="text"
+                                placeholder="Cidade / UF"
+                                oninput="syncLabel()"
+                                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                            >
+                        </div>
+
+                        <div>
+                            <label for="input-rem-telefone" class="block text-xs font-semibold text-slate-700 mb-1">
+                                Telefone
+                            </label>
+                            <input
+                                id="input-rem-telefone"
+                                type="text"
+                                maxlength="16"
+                                placeholder="(00) 90000-0000"
+                                oninput="formatPhoneInput(this); syncLabel();"
+                                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                            >
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="input-rem-cep" class="block text-xs font-semibold text-slate-700 mb-1">
+                            CEP (Busca automática opcional)
+                        </label>
+                        <div class="flex gap-2">
+                            <input
+                                id="input-rem-cep"
+                                type="text"
+                                maxlength="9"
+                                placeholder="00000-000"
+                                oninput="formatCepInput(this); syncLabel();"
+                                class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                            >
+                            <button
+                                type="button"
+                                onclick="lookupCep('rem')"
+                                class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold whitespace-nowrap transition cursor-pointer"
+                            >
+                                Buscar CEP
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões Inferiores no Painel -->
+                <div class="pt-2 flex flex-col sm:flex-row gap-2.5">
+                    <button
+                        type="button"
+                        onclick="printLabel()"
+                        class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold shadow-sm transition cursor-pointer"
+                    >
+                        <i data-lucide="printer" class="w-4 h-4"></i>
+                        <span>Imprimir / Salvar PDF</span>
+                    </button>
+                    <button
+                        type="button"
+                        onclick="clearAllFields()"
+                        class="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition cursor-pointer"
+                    >
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        <span>Limpar Campos</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- ============================================================= -->
+            <!-- VISUALIZAÇÃO DA ETIQUETA EM TEMPO REAL (MODELO DA IMAGEM)      -->
+            <!-- ============================================================= -->
+            <section class="lg:col-span-7 flex flex-col items-center">
+                <div class="no-print w-full max-w-[620px] flex items-center justify-between text-xs text-slate-500 mb-2.5 px-1">
+                    <span class="font-medium">Pré-visualização da Etiqueta</span>
+                    <span>Formato pronto para impressão A4 / Etiqueta</span>
+                </div>
+
+                <div id="etiqueta-impressao" class="label-sheet">
+                    <!-- ÁREA SUPERIOR RESERVADA: USO EXCLUSIVO DOS CORREIOS -->
+                    <div class="correios-box">
+                        <span class="corner-mark corner-tl"></span>
+                        <span class="corner-mark corner-tr"></span>
+                        <span class="corner-mark corner-bl"></span>
+                        <span class="corner-mark corner-br"></span>
+
+                        <div class="text-[12px] font-extrabold tracking-wide uppercase text-black">
+                            USO EXCLUSIVO DOS CORREIOS
+                        </div>
+                        <div class="text-[11px] font-normal text-black mt-0.5">
+                            Cole aqui a etiqueta com o código identificador da encomenda
+                        </div>
+                    </div>
+
+                    <!-- RECEBEDOR, DOCUMENTO E DATA DE ENTREGA -->
+                    <div class="space-y-2.5 mb-3">
+                        <div class="flex items-end gap-2">
+                            <span class="text-[12px] font-bold text-black shrink-0">Recebedor:</span>
+                            <div id="out-recebedor" class="form-line flex-1"></div>
+                        </div>
+
+                        <div class="flex flex-wrap sm:flex-nowrap items-end gap-3">
+                            <div class="flex items-end gap-2 flex-1 min-w-[200px]">
+                                <span class="text-[12px] font-bold text-black shrink-0">Documento:</span>
+                                <div id="out-documento" class="form-line flex-1"></div>
+                            </div>
+
+                            <div class="flex items-end gap-1.5 shrink-0">
+                                <span class="text-[12px] font-bold text-black">Data de entrega:</span>
+                                <div id="out-data-entrega" class="text-[12px] font-bold text-black tracking-wider min-w-[84px] text-center border-b border-black pb-0.5">
+                                    &nbsp;&nbsp;/&nbsp;&nbsp;/
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BLOCO: AUTORIZA A ENTREGA NO VIZINHO? -->
+                    <div class="border border-black mb-3">
+                        <div class="section-banner-full">
+                            AUTORIZA A ENTREGA NO VIZINHO? (Delivery to a preferred neighbour)
+                        </div>
+                        <div class="p-2 flex flex-wrap sm:flex-nowrap items-end justify-between gap-3">
+                            <div class="flex items-center gap-4 shrink-0">
+                                <div class="inline-flex items-center gap-1.5">
+                                    <span id="box-vizinho-nao" class="check-box"></span>
+                                    <span class="text-[10.5px] font-bold text-black">NÃO (no)</span>
+                                </div>
+
+                                <div class="inline-flex items-center gap-1.5">
+                                    <span id="box-vizinho-sim" class="check-box"></span>
+                                    <span class="text-[10.5px] font-bold text-black">SIM (yes)</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-end gap-1.5 flex-1 min-w-[140px]">
+                                <span class="text-[9.5px] font-bold uppercase text-black shrink-0">NÚMERO</span>
+                                <div id="out-vizinho-numero" class="form-line flex-1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BLOCO: DESTINATÁRIO (ADDRESSEE) -->
+                    <div class="border border-black p-2.5 mb-3 space-y-2">
+                        <div>
+                            <span class="section-banner">DESTINATÁRIO (Addressee)</span>
+                        </div>
+
+                        <!-- Nome do Destinatário -->
+                        <div id="out-dest-nome" class="form-line"></div>
+
+                        <!-- Endereço -->
+                        <div>
+                            <span class="field-label-small">ENDEREÇO (Address)</span>
+                            <div id="out-dest-endereco" class="form-line"></div>
+                        </div>
+
+                        <!-- Cidade / UF // Telefone -->
+                        <div class="grid grid-cols-1 sm:grid-cols-12 items-end gap-1">
+                            <div class="sm:col-span-7">
+                                <span class="field-label-small">CIDADE (City) / UF (State)</span>
+                                <div id="out-dest-cidade-uf" class="form-line"></div>
+                            </div>
+
+                            <div class="hidden sm:flex sm:col-span-1 items-center justify-center pb-0.5">
+                                <span class="slash-divider">//</span>
+                            </div>
+
+                            <div class="sm:col-span-4">
+                                <span class="field-label-small">TELEFONE (Phone Number)</span>
+                                <div id="out-dest-telefone" class="form-line"></div>
+                            </div>
+                        </div>
+
+                        <!-- CEP (Postal Code) em caixinhas 5 + 3 -->
+                        <div class="pt-0.5">
+                            <span class="field-label-small">CEP (Postal Code)</span>
+                            <div id="out-dest-cep-boxes" class="flex items-center flex-wrap gap-1 mt-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- BLOCO: REMETENTE (SENDER) -->
+                    <div class="space-y-2 pt-0.5">
+                        <div>
+                            <span class="section-banner">REMETENTE (Sender)</span>
+                        </div>
+
+                        <!-- Nome do Remetente -->
+                        <div id="out-rem-nome" class="form-line"></div>
+
+                        <!-- Endereço do Remetente -->
+                        <div>
+                            <span class="field-label-small">ENDEREÇO (Address)</span>
+                            <div id="out-rem-endereco" class="form-line"></div>
+                        </div>
+
+                        <!-- Cidade / UF // Telefone -->
+                        <div class="grid grid-cols-1 sm:grid-cols-12 items-end gap-1">
+                            <div class="sm:col-span-7">
+                                <span class="field-label-small">CIDADE (City) / UF (State)</span>
+                                <div id="out-rem-cidade-uf" class="form-line"></div>
+                            </div>
+
+                            <div class="hidden sm:flex sm:col-span-1 items-center justify-center pb-0.5">
+                                <span class="slash-divider">//</span>
+                            </div>
+
+                            <div class="sm:col-span-4">
+                                <span class="field-label-small">TELEFONE (Phone Number)</span>
+                                <div id="out-rem-telefone" class="form-line"></div>
+                            </div>
+                        </div>
+
+                        <!-- CEP (Postal Code) em caixinhas 5 + 3 -->
+                        <div class="pt-0.5">
+                            <span class="field-label-small">CEP (Postal Code)</span>
+                            <div id="out-rem-cep-boxes" class="flex items-center flex-wrap gap-1 mt-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        // Inicializa ícones Lucide com segurança
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
+
+        // Renderiza 8 caixinhas individuais no padrão 5 dígitos + espaço/traço + 3 dígitos
+        function renderCepBoxes(containerId, rawCepValue) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            const digits = (rawCepValue || '').replace(/\D/g, '').slice(0, 8);
+            container.innerHTML = '';
+
+            for (let i = 0; i < 8; i++) {
+                if (i === 5) {
+                    const gap = document.createElement('span');
+                    gap.className = 'cep-gap';
+                    gap.setAttribute('aria-hidden', 'true');
+                    container.appendChild(gap);
+                }
+
+                const box = document.createElement('span');
+                box.className = 'cep-digit-box';
+                box.textContent = digits[i] || '';
+                container.appendChild(box);
+            }
+        }
+
+        // Formata CEP como 00000-000 durante a digitação
+        function formatCepInput(input) {
+            const digits = input.value.replace(/\D/g, '').slice(0, 8);
+            if (digits.length > 5) {
+                input.value = digits.slice(0, 5) + '-' + digits.slice(5);
+            } else {
+                input.value = digits;
+            }
+        }
+
+        // Formata telefone brasileiro (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+        function formatPhoneInput(input) {
+            const digits = input.value.replace(/\D/g, '').slice(0, 11);
+            if (digits.length === 0) {
+                input.value = '';
+                return;
+            }
+            if (digits.length <= 2) {
+                input.value = '(' + digits;
+            } else if (digits.length <= 6) {
+                input.value = '(' + digits.slice(0, 2) + ') ' + digits.slice(2);
+            } else if (digits.length <= 10) {
+                input.value = '(' + digits.slice(0, 2) + ') ' + digits.slice(2, 6) + '-' + digits.slice(6);
+            } else {
+                input.value = '(' + digits.slice(0, 2) + ') ' + digits.slice(2, 7) + '-' + digits.slice(7);
+            }
+        }
+
+        // Formata data como DD/MM/AAAA
+        function formatDateInput(input) {
+            const digits = input.value.replace(/\D/g, '').slice(0, 8);
+            if (digits.length <= 2) {
+                input.value = digits;
+            } else if (digits.length <= 4) {
+                input.value = digits.slice(0, 2) + '/' + digits.slice(2);
+            } else {
+                input.value = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
+            }
+        }
+
+        // Atualiza todos os campos da etiqueta em tempo real
+        function syncLabel() {
+            const recebedor = document.getElementById('input-recebedor').value.trim();
+            const documento = document.getElementById('input-documento').value.trim();
+            const dataEntrega = document.getElementById('input-data-entrega').value.trim();
+            const vizinhoRadio = document.querySelector('input[name="vizinho"]:checked');
+            const vizinhoChoice = vizinhoRadio ? vizinhoRadio.value : 'nao';
+            const vizinhoNumero = document.getElementById('input-vizinho-numero').value.trim();
+
+            const destNome = document.getElementById('input-dest-nome').value.trim();
+            const destEndereco = document.getElementById('input-dest-endereco').value.trim();
+            const destCidadeUf = document.getElementById('input-dest-cidade-uf').value.trim();
+            const destTelefone = document.getElementById('input-dest-telefone').value.trim();
+            const destCep = document.getElementById('input-dest-cep').value.trim();
+
+            const remNome = document.getElementById('input-rem-nome').value.trim();
+            const remEndereco = document.getElementById('input-rem-endereco').value.trim();
+            const remCidadeUf = document.getElementById('input-rem-cidade-uf').value.trim();
+            const remTelefone = document.getElementById('input-rem-telefone').value.trim();
+            const remCep = document.getElementById('input-rem-cep').value.trim();
+
+            document.getElementById('out-recebedor').textContent = recebedor;
+            document.getElementById('out-documento').textContent = documento;
+
+            const outData = document.getElementById('out-data-entrega');
+            if (dataEntrega) {
+                outData.textContent = dataEntrega;
+            } else {
+                outData.innerHTML = '&nbsp;&nbsp;/&nbsp;&nbsp;/';
+            }
+
+            const boxNao = document.getElementById('box-vizinho-nao');
+            const boxSim = document.getElementById('box-vizinho-sim');
+            boxNao.textContent = vizinhoChoice === 'nao' ? '✓' : '';
+            boxSim.textContent = vizinhoChoice === 'sim' ? '✓' : '';
+            document.getElementById('out-vizinho-numero').textContent = vizinhoNumero;
+
+            document.getElementById('out-dest-nome').textContent = destNome;
+            document.getElementById('out-dest-endereco').textContent = destEndereco;
+            document.getElementById('out-dest-cidade-uf').textContent = destCidadeUf;
+            document.getElementById('out-dest-telefone').textContent = destTelefone;
+            renderCepBoxes('out-dest-cep-boxes', destCep);
+
+            document.getElementById('out-rem-nome').textContent = remNome;
+            document.getElementById('out-rem-endereco').textContent = remEndereco;
+            document.getElementById('out-rem-cidade-uf').textContent = remCidadeUf;
+            document.getElementById('out-rem-telefone').textContent = remTelefone;
+            renderCepBoxes('out-rem-cep-boxes', remCep);
+        }
+
+        // Busca endereço opcional via API pública ViaCEP
+        async function lookupCep(target) {
+            const isDest = target === 'dest';
+            const cepInput = document.getElementById(isDest ? 'input-dest-cep' : 'input-rem-cep');
+            const statusEl = document.getElementById(isDest ? 'status-cep-dest' : 'status-cep-rem');
+            const endInput = document.getElementById(isDest ? 'input-dest-endereco' : 'input-rem-endereco');
+            const cidUfInput = document.getElementById(isDest ? 'input-dest-cidade-uf' : 'input-rem-cidade-uf');
+
+            const cleanCep = (cepInput.value || '').replace(/\D/g, '');
+            if (cleanCep.length !== 8) {
+                statusEl.textContent = 'Digite 8 números';
+                statusEl.className = 'text-[11px] text-amber-600 font-medium';
+                return;
+            }
+
+            statusEl.textContent = 'Buscando...';
+            statusEl.className = 'text-[11px] text-slate-500';
+
+            try {
+                const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+                const data = await response.json();
+
+                if (data.erro) {
+                    statusEl.textContent = 'CEP não encontrado';
+                    statusEl.className = 'text-[11px] text-rose-600 font-medium';
+                    return;
+                }
+
+                const partesEnd = [];
+                if (data.logradouro) partesEnd.push(data.logradouro);
+                if (data.bairro) partesEnd.push(data.bairro);
+
+                if (partesEnd.length > 0 && !endInput.value.trim()) {
+                    endInput.value = partesEnd.join(' - ');
+                }
+
+                if (data.localidade && data.uf) {
+                    cidUfInput.value = `${data.localidade} / ${data.uf}`;
+                }
+
+                statusEl.textContent = 'Endereço preenchido';
+                statusEl.className = 'text-[11px] text-emerald-600 font-medium';
+                syncLabel();
+            } catch (error) {
+                statusEl.textContent = 'Erro ao consultar CEP';
+                statusEl.className = 'text-[11px] text-rose-600 font-medium';
+            }
+        }
+
+        // Limpa todos os campos do formulário e da etiqueta
+        function clearAllFields() {
+            const inputIds = [
+                'input-recebedor',
+                'input-documento',
+                'input-data-entrega',
+                'input-vizinho-numero',
+                'input-dest-nome',
+                'input-dest-endereco',
+                'input-dest-cidade-uf',
+                'input-dest-telefone',
+                'input-dest-cep',
+                'input-rem-nome',
+                'input-rem-endereco',
+                'input-rem-cidade-uf',
+                'input-rem-telefone',
+                'input-rem-cep'
+            ];
+
+            inputIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            const naoRadio = document.querySelector('input[name="vizinho"][value="nao"]');
+            if (naoRadio) naoRadio.checked = true;
+
+            ['status-cep-dest', 'status-cep-rem'].forEach(id => {
+                const st = document.getElementById(id);
+                if (st) st.textContent = '';
+            });
+
+            syncLabel();
+        }
+
+        // Aciona impressão / salvar como PDF
+        function printLabel() {
+            syncLabel();
+            window.print();
+        }
+
+        // Inicializa a etiqueta ao carregar a página
+        window.addEventListener('DOMContentLoaded', () => {
+            syncLabel();
+        });
+    </script>
+</body>
+</html>
