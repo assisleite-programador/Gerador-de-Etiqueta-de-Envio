@@ -126,7 +126,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 800;
             line-height: 1;
             background: #FFFFFF;
@@ -709,8 +709,14 @@
 
     <script>
         // Inicializa ícones Lucide com segurança
-        if (typeof lucide !== 'undefined' && lucide.createIcons) {
-            lucide.createIcons();
+        function initIcons() {
+            try {
+                if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                    lucide.createIcons();
+                }
+            } catch (err) {
+                // Evita bloqueio caso a biblioteca de ícones não esteja disponível
+            }
         }
 
         // Renderiza 8 caixinhas individuais no padrão 5 dígitos + espaço/traço + 3 dígitos
@@ -738,6 +744,7 @@
 
         // Formata CEP como 00000-000 durante a digitação
         function formatCepInput(input) {
+            if (!input) return;
             const digits = input.value.replace(/\D/g, '').slice(0, 8);
             if (digits.length > 5) {
                 input.value = digits.slice(0, 5) + '-' + digits.slice(5);
@@ -748,6 +755,7 @@
 
         // Formata telefone brasileiro (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
         function formatPhoneInput(input) {
+            if (!input) return;
             const digits = input.value.replace(/\D/g, '').slice(0, 11);
             if (digits.length === 0) {
                 input.value = '';
@@ -766,6 +774,7 @@
 
         // Formata data como DD/MM/AAAA
         function formatDateInput(input) {
+            if (!input) return;
             const digits = input.value.replace(/\D/g, '').slice(0, 8);
             if (digits.length <= 2) {
                 input.value = digits;
@@ -778,51 +787,68 @@
 
         // Atualiza todos os campos da etiqueta em tempo real
         function syncLabel() {
-            const recebedor = document.getElementById('input-recebedor').value.trim();
-            const documento = document.getElementById('input-documento').value.trim();
-            const dataEntrega = document.getElementById('input-data-entrega').value.trim();
+            const recebedor = (document.getElementById('input-recebedor')?.value || '').trim();
+            const documento = (document.getElementById('input-documento')?.value || '').trim();
+            const dataEntrega = (document.getElementById('input-data-entrega')?.value || '').trim();
             const vizinhoRadio = document.querySelector('input[name="vizinho"]:checked');
             const vizinhoChoice = vizinhoRadio ? vizinhoRadio.value : 'nao';
-            const vizinhoNumero = document.getElementById('input-vizinho-numero').value.trim();
+            const vizinhoNumero = (document.getElementById('input-vizinho-numero')?.value || '').trim();
 
-            const destNome = document.getElementById('input-dest-nome').value.trim();
-            const destEndereco = document.getElementById('input-dest-endereco').value.trim();
-            const destCidadeUf = document.getElementById('input-dest-cidade-uf').value.trim();
-            const destTelefone = document.getElementById('input-dest-telefone').value.trim();
-            const destCep = document.getElementById('input-dest-cep').value.trim();
+            const destNome = (document.getElementById('input-dest-nome')?.value || '').trim();
+            const destEndereco = (document.getElementById('input-dest-endereco')?.value || '').trim();
+            const destCidadeUf = (document.getElementById('input-dest-cidade-uf')?.value || '').trim();
+            const destTelefone = (document.getElementById('input-dest-telefone')?.value || '').trim();
+            const destCep = (document.getElementById('input-dest-cep')?.value || '').trim();
 
-            const remNome = document.getElementById('input-rem-nome').value.trim();
-            const remEndereco = document.getElementById('input-rem-endereco').value.trim();
-            const remCidadeUf = document.getElementById('input-rem-cidade-uf').value.trim();
-            const remTelefone = document.getElementById('input-rem-telefone').value.trim();
-            const remCep = document.getElementById('input-rem-cep').value.trim();
+            const remNome = (document.getElementById('input-rem-nome')?.value || '').trim();
+            const remEndereco = (document.getElementById('input-rem-endereco')?.value || '').trim();
+            const remCidadeUf = (document.getElementById('input-rem-cidade-uf')?.value || '').trim();
+            const remTelefone = (document.getElementById('input-rem-telefone')?.value || '').trim();
+            const remCep = (document.getElementById('input-rem-cep')?.value || '').trim();
 
-            document.getElementById('out-recebedor').textContent = recebedor;
-            document.getElementById('out-documento').textContent = documento;
-
+            const outRecebedor = document.getElementById('out-recebedor');
+            const outDocumento = document.getElementById('out-documento');
             const outData = document.getElementById('out-data-entrega');
-            if (dataEntrega) {
-                outData.textContent = dataEntrega;
-            } else {
-                outData.innerHTML = '&nbsp;&nbsp;/&nbsp;&nbsp;/';
+
+            if (outRecebedor) outRecebedor.textContent = recebedor;
+            if (outDocumento) outDocumento.textContent = documento;
+
+            if (outData) {
+                if (dataEntrega) {
+                    outData.textContent = dataEntrega;
+                } else {
+                    outData.innerHTML = '&nbsp;&nbsp;/&nbsp;&nbsp;/';
+                }
             }
 
             const boxNao = document.getElementById('box-vizinho-nao');
             const boxSim = document.getElementById('box-vizinho-sim');
-            boxNao.textContent = vizinhoChoice === 'nao' ? '✓' : '';
-            boxSim.textContent = vizinhoChoice === 'sim' ? '✓' : '';
-            document.getElementById('out-vizinho-numero').textContent = vizinhoNumero;
+            if (boxNao) boxNao.textContent = vizinhoChoice === 'nao' ? 'X' : '';
+            if (boxSim) boxSim.textContent = vizinhoChoice === 'sim' ? 'X' : '';
 
-            document.getElementById('out-dest-nome').textContent = destNome;
-            document.getElementById('out-dest-endereco').textContent = destEndereco;
-            document.getElementById('out-dest-cidade-uf').textContent = destCidadeUf;
-            document.getElementById('out-dest-telefone').textContent = destTelefone;
+            const outVizNumero = document.getElementById('out-vizinho-numero');
+            if (outVizNumero) outVizNumero.textContent = vizinhoNumero;
+
+            const outDestNome = document.getElementById('out-dest-nome');
+            const outDestEnd = document.getElementById('out-dest-endereco');
+            const outDestCidUf = document.getElementById('out-dest-cidade-uf');
+            const outDestTel = document.getElementById('out-dest-telefone');
+
+            if (outDestNome) outDestNome.textContent = destNome;
+            if (outDestEnd) outDestEnd.textContent = destEndereco;
+            if (outDestCidUf) outDestCidUf.textContent = destCidadeUf;
+            if (outDestTel) outDestTel.textContent = destTelefone;
             renderCepBoxes('out-dest-cep-boxes', destCep);
 
-            document.getElementById('out-rem-nome').textContent = remNome;
-            document.getElementById('out-rem-endereco').textContent = remEndereco;
-            document.getElementById('out-rem-cidade-uf').textContent = remCidadeUf;
-            document.getElementById('out-rem-telefone').textContent = remTelefone;
+            const outRemNome = document.getElementById('out-rem-nome');
+            const outRemEnd = document.getElementById('out-rem-endereco');
+            const outRemCidUf = document.getElementById('out-rem-cidade-uf');
+            const outRemTel = document.getElementById('out-rem-telefone');
+
+            if (outRemNome) outRemNome.textContent = remNome;
+            if (outRemEnd) outRemEnd.textContent = remEndereco;
+            if (outRemCidUf) outRemCidUf.textContent = remCidadeUf;
+            if (outRemTel) outRemTel.textContent = remTelefone;
             renderCepBoxes('out-rem-cep-boxes', remCep);
         }
 
@@ -833,6 +859,8 @@
             const statusEl = document.getElementById(isDest ? 'status-cep-dest' : 'status-cep-rem');
             const endInput = document.getElementById(isDest ? 'input-dest-endereco' : 'input-rem-endereco');
             const cidUfInput = document.getElementById(isDest ? 'input-dest-cidade-uf' : 'input-rem-cidade-uf');
+
+            if (!cepInput || !statusEl) return;
 
             const cleanCep = (cepInput.value || '').replace(/\D/g, '');
             if (cleanCep.length !== 8) {
@@ -846,6 +874,9 @@
 
             try {
                 const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+                if (!response.ok) {
+                    throw new Error('Falha na consulta do CEP');
+                }
                 const data = await response.json();
 
                 if (data.erro) {
@@ -858,11 +889,11 @@
                 if (data.logradouro) partesEnd.push(data.logradouro);
                 if (data.bairro) partesEnd.push(data.bairro);
 
-                if (partesEnd.length > 0 && !endInput.value.trim()) {
+                if (endInput && partesEnd.length > 0 && !endInput.value.trim()) {
                     endInput.value = partesEnd.join(' - ');
                 }
 
-                if (data.localidade && data.uf) {
+                if (cidUfInput && data.localidade && data.uf) {
                     cidUfInput.value = `${data.localidade} / ${data.uf}`;
                 }
 
@@ -870,7 +901,7 @@
                 statusEl.className = 'text-[11px] text-emerald-600 font-medium';
                 syncLabel();
             } catch (error) {
-                statusEl.textContent = 'Erro ao consultar CEP';
+                statusEl.textContent = 'CEP indisponível no momento';
                 statusEl.className = 'text-[11px] text-rose-600 font-medium';
             }
         }
@@ -916,8 +947,9 @@
             window.print();
         }
 
-        // Inicializa a etiqueta ao carregar a página
+        // Inicializa ícones, caixinhas de CEP e sincronização ao carregar a página
         window.addEventListener('DOMContentLoaded', () => {
+            initIcons();
             syncLabel();
         });
     </script>
