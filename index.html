@@ -164,6 +164,21 @@
             user-select: none;
         }
 
+        /* Identificação discreta e profissional do ateliê na etiqueta */
+        .atelier-brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid #111111;
+            padding: 2px 7px;
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #000000;
+            background-color: #FAFAFA;
+        }
+
         /* Regras específicas para impressão limpa em PDF ou papel */
         @media print {
             @page {
@@ -223,7 +238,7 @@
                         Gerador de Etiqueta de Envio
                     </h1>
                     <p class="text-xs text-slate-500">
-                        Preenchimento em tempo real • Padrão Correios com Destinatário e Remetente
+                        Preenchimento em tempo real • Padrão Correios • <span class="font-medium text-slate-700">Ateliê Arleany Mascarenhas</span>
                     </p>
                 </div>
             </div>
@@ -258,6 +273,41 @@
             <!-- PAINEL DE PREENCHIMENTO (OCULTO NA IMPRESSÃO)                 -->
             <!-- ============================================================= -->
             <aside class="no-print lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 sm:p-5 space-y-5">
+
+                <!-- 0. Identificação da Marca / Ateliê -->
+                <div class="bg-amber-50/70 rounded-xl p-3.5 border border-amber-200/80 space-y-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-800">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-amber-600"></i>
+                            <span>Marca do Ateliê</span>
+                        </div>
+
+                        <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer select-none">
+                            <input
+                                id="toggle-marca-atelie"
+                                type="checkbox"
+                                checked
+                                onchange="syncLabel()"
+                                class="w-4 h-4 rounded accent-slate-900 cursor-pointer"
+                            >
+                            <span>Exibir na etiqueta</span>
+                        </label>
+                    </div>
+
+                    <div>
+                        <label for="input-marca-atelie" class="block text-[11px] font-semibold text-slate-600 mb-1">
+                            Nome do Ateliê / Marca
+                        </label>
+                        <input
+                            id="input-marca-atelie"
+                            type="text"
+                            value="Ateliê Arleany Mascarenhas"
+                            placeholder="Ex.: Ateliê Arleany Mascarenhas"
+                            oninput="syncMarcaAtelie()"
+                            class="w-full px-3 py-1.5 text-sm font-medium rounded-lg border border-amber-300 bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
+                        >
+                    </div>
+                </div>
 
                 <!-- 1. Dados de Recebimento e Entrega -->
                 <div class="space-y-3">
@@ -459,6 +509,7 @@
                         <input
                             id="input-rem-nome"
                             type="text"
+                            value="Ateliê Arleany Mascarenhas"
                             placeholder="Seu nome ou loja"
                             oninput="syncLabel()"
                             class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 outline-none transition"
@@ -665,128 +716,32 @@
 
                     <!-- BLOCO: REMETENTE (SENDER) -->
                     <div class="space-y-2 pt-0.5">
-                        <div>
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
                             <span class="section-banner">REMETENTE (Sender)</span>
+                            <div id="out-marca-atelie" class="atelier-brand-badge">
+                                <span id="out-marca-atelie-texto">Ateliê Arleany Mascarenhas</span>
+                            </div>
                         </div>
 
                         <!-- Nome do Remetente -->
-                        <div id="out-rem-nome" class="form-line"></div>
-
-                        <!-- Endereço do Remetente -->
-                        <div>
-                            <span class="field-label-small">ENDEREÇO (Address)</span>
-                            <div id="out-rem-endereco" class="form-line"></div>
-                        </div>
-
-                        <!-- Cidade / UF // Telefone -->
-                        <div class="grid grid-cols-1 sm:grid-cols-12 items-end gap-1">
-                            <div class="sm:col-span-7">
-                                <span class="field-label-small">CIDADE (City) / UF (State)</span>
-                                <div id="out-rem-cidade-uf" class="form-line"></div>
-                            </div>
-
-                            <div class="hidden sm:flex sm:col-span-1 items-center justify-center pb-0.5">
-                                <span class="slash-divider">//</span>
-                            </div>
-
-                            <div class="sm:col-span-4">
-                                <span class="field-label-small">TELEFONE (Phone Number)</span>
-                                <div id="out-rem-telefone" class="form-line"></div>
-                            </div>
-                        </div>
-
-                        <!-- CEP (Postal Code) em caixinhas 5 + 3 -->
-                        <div class="pt-0.5">
-                            <span class="field-label-small">CEP (Postal Code)</span>
-                            <div id="out-rem-cep-boxes" class="flex items-center flex-wrap gap-1 mt-1"></div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-        </div>
-    </main>
-
-    <script>
-        // Inicializa ícones Lucide com segurança
-        function initIcons() {
-            try {
-                if (typeof lucide !== 'undefined' && lucide.createIcons) {
-                    lucide.createIcons();
-                }
-            } catch (err) {
-                // Evita bloqueio caso a biblioteca de ícones não esteja disponível
+<!-- ... existing ... -->
+        // Atualiza a identificação da marca do ateliê e sincroniza com o remetente se vazio
+        function syncMarcaAtelie() {
+            const marcaInput = document.getElementById('input-marca-atelie');
+            const remNomeInput = document.getElementById('input-rem-nome');
+            if (marcaInput && remNomeInput && !remNomeInput.dataset.manualEdit) {
+                remNomeInput.value = marcaInput.value;
             }
-        }
-
-        // Renderiza 8 caixinhas individuais no padrão 5 dígitos + espaço/traço + 3 dígitos
-        function renderCepBoxes(containerId, rawCepValue) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-
-            const digits = (rawCepValue || '').replace(/\D/g, '').slice(0, 8);
-            container.innerHTML = '';
-
-            for (let i = 0; i < 8; i++) {
-                if (i === 5) {
-                    const gap = document.createElement('span');
-                    gap.className = 'cep-gap';
-                    gap.setAttribute('aria-hidden', 'true');
-                    container.appendChild(gap);
-                }
-
-                const box = document.createElement('span');
-                box.className = 'cep-digit-box';
-                box.textContent = digits[i] || '';
-                container.appendChild(box);
-            }
-        }
-
-        // Formata CEP como 00000-000 durante a digitação
-        function formatCepInput(input) {
-            if (!input) return;
-            const digits = input.value.replace(/\D/g, '').slice(0, 8);
-            if (digits.length > 5) {
-                input.value = digits.slice(0, 5) + '-' + digits.slice(5);
-            } else {
-                input.value = digits;
-            }
-        }
-
-        // Formata telefone brasileiro (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
-        function formatPhoneInput(input) {
-            if (!input) return;
-            const digits = input.value.replace(/\D/g, '').slice(0, 11);
-            if (digits.length === 0) {
-                input.value = '';
-                return;
-            }
-            if (digits.length <= 2) {
-                input.value = '(' + digits;
-            } else if (digits.length <= 6) {
-                input.value = '(' + digits.slice(0, 2) + ') ' + digits.slice(2);
-            } else if (digits.length <= 10) {
-                input.value = '(' + digits.slice(0, 2) + ') ' + digits.slice(2, 6) + '-' + digits.slice(6);
-            } else {
-                input.value = '(' + digits.slice(0, 2) + ') ' + digits.slice(2, 7) + '-' + digits.slice(7);
-            }
-        }
-
-        // Formata data como DD/MM/AAAA
-        function formatDateInput(input) {
-            if (!input) return;
-            const digits = input.value.replace(/\D/g, '').slice(0, 8);
-            if (digits.length <= 2) {
-                input.value = digits;
-            } else if (digits.length <= 4) {
-                input.value = digits.slice(0, 2) + '/' + digits.slice(2);
-            } else {
-                input.value = digits.slice(0, 2) + '/' + digits.slice(2, 4) + '/' + digits.slice(4);
-            }
+            syncLabel();
         }
 
         // Atualiza todos os campos da etiqueta em tempo real
         function syncLabel() {
+            const marcaInput = document.getElementById('input-marca-atelie');
+            const marcaToggle = document.getElementById('toggle-marca-atelie');
+            const marcaNome = (marcaInput?.value || '').trim() || 'Ateliê Arleany Mascarenhas';
+            const exibirMarca = marcaToggle ? marcaToggle.checked : true;
+
             const recebedor = (document.getElementById('input-recebedor')?.value || '').trim();
             const documento = (document.getElementById('input-documento')?.value || '').trim();
             const dataEntrega = (document.getElementById('input-data-entrega')?.value || '').trim();
@@ -850,6 +805,19 @@
             if (outRemCidUf) outRemCidUf.textContent = remCidadeUf;
             if (outRemTel) outRemTel.textContent = remTelefone;
             renderCepBoxes('out-rem-cep-boxes', remCep);
+
+            const marcaBadge = document.getElementById('out-marca-atelie');
+            const marcaTexto = document.getElementById('out-marca-atelie-texto');
+            if (marcaTexto) marcaTexto.textContent = marcaNome;
+            if (marcaBadge) {
+                if (exibirMarca) {
+                    marcaBadge.classList.remove('hidden');
+                    marcaBadge.style.display = 'inline-flex';
+                } else {
+                    marcaBadge.classList.add('hidden');
+                    marcaBadge.style.display = 'none';
+                }
+            }
         }
 
         // Busca endereço opcional via API pública ViaCEP
@@ -927,8 +895,23 @@
 
             inputIds.forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.value = '';
+                if (el) {
+                    el.value = '';
+                    delete el.dataset.manualEdit;
+                }
             });
+
+            const marcaInput = document.getElementById('input-marca-atelie');
+            const remNomeInput = document.getElementById('input-rem-nome');
+            if (marcaInput) {
+                marcaInput.value = 'Ateliê Arleany Mascarenhas';
+            }
+            if (remNomeInput) {
+                remNomeInput.value = 'Ateliê Arleany Mascarenhas';
+            }
+
+            const marcaToggle = document.getElementById('toggle-marca-atelie');
+            if (marcaToggle) marcaToggle.checked = true;
 
             const naoRadio = document.querySelector('input[name="vizinho"][value="nao"]');
             if (naoRadio) naoRadio.checked = true;
@@ -950,6 +933,12 @@
         // Inicializa ícones, caixinhas de CEP e sincronização ao carregar a página
         window.addEventListener('DOMContentLoaded', () => {
             initIcons();
+            const remNomeInput = document.getElementById('input-rem-nome');
+            if (remNomeInput) {
+                remNomeInput.addEventListener('input', () => {
+                    remNomeInput.dataset.manualEdit = 'true';
+                });
+            }
             syncLabel();
         });
     </script>
